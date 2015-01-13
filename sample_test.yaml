@@ -1,0 +1,54 @@
+439-1695A_S10:
+    patient_details:
+        date_of_birth     : 
+        clinical_diagnosis: 
+        cancer_stage      : 
+        date_of_diagnosis : 
+        receptor_type     : 
+        molecular_type    : 
+    patient_addr:
+        name    : 
+        surname : 
+        street  : 
+        state   : 
+        city    : 
+        zip     : 
+    physician_addr:
+        name    : House
+        surname : G
+        street  : 12345 Hospital Ave
+        state   : CA
+        city    : San Diego
+        zip     : 12345
+    sample_details:
+        sampling_date  :
+        sample_volume  :
+        sample_purity  :
+        amount_rna_used: 100ng
+        seq_type       : RNA-Seq
+        seq_protocoll  : Nano
+    base_space_qc:
+        total_yield_fb     : 110
+        pf                 : 100
+        percent_percent_pf : 75
+        percent_q_score_30 : 75
+        percent_phix_5_alg : 0.25
+        percent_error_rate : 2.5
+    run_info:
+        run_id                     : 07302014
+        start                      : 7/30/2014
+        completion                 : 8/5/2014
+        total_yield_gb             : 6.8
+        pf_yield                   : 4.4
+        percent_pf                 : 0.75
+        percent_q_score_30         : 66
+        percent_intensity_cycle_20 : 109
+        data_output_gb             : 19.35
+        prep_kit                   : Nano
+        percent_demultiplexing_info: 39
+        percent_phix_alg           : 0.11
+        percent_error_rate         : 2.46
+        
+
+
+
