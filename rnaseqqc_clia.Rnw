@@ -1,0 +1,252 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Next Generation Sequencing QC Report
+%
+% Original author:
+% Tobias Meissner
+%
+% License:
+% MIT
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%  Data Input
+%----------------------------------------------------------------------------------------
+
+<<r init, echo=FALSE>>=
+library(knitr)
+library(xtable)
+
+sanitizeLatexS <- function(str) {
+    gsub('([#$%&~_\\^\\\\{}])', '\\\\\\\\\\1', str, perl = TRUE);
+}
+ 
+sampleID <- '439-1695A_S10'
+@
+
+<<dataIn, echo=FALSE>>=
+rootDir <- '~/AWS/storage/Geparquinto/'
+
+## FASTQC
+file1 <- paste(rootDir,'QC/',sampleID,'_1/',sampleID,'_1_fastqc.zip',sep='')
+file2 <- paste(rootDir,'QC/',sampleID,'_2/',sampleID,'_2_fastqc.zip',sep='')
+fastqc1 <- read.csv2(unz(file1, paste(sampleID,'_1_fastqc/summary.txt',sep='')), sep='\t', header=F)
+fastqc2 <- read.csv2(unz(file2, paste(sampleID,'_2_fastqc/summary.txt',sep='')), sep='\t', header=F)
+colnames(fastqc1) <- c('Result', 'Analysis', 'File')
+colnames(fastqc2) <- c('Result', 'Analysis', 'File')
+
+## STAR
+fileStar <- paste(rootDir,'star/',sampleID,'/Log.final.out',sep='')
+starLog <- read.csv2(fileStar, sep='\t', header=F)
+starLog$V1 <- sapply(starLog$V1, function(x) gsub('\\|', '', x))
+
+## picard rnaseqmetrics $ insert size
+file3 <- paste(rootDir,'QC/',sampleID,'/rnaseqmetrics',sep='')
+rnaSeqMetrics <- read.csv2(file3, comment.char = "#", sep='\t')
+rnaSeqMetrics <- rnaSeqMetrics[1,]
+
+file4 <- paste(rootDir,'QC/',sampleID,'/insertSize.txt',sep='')
+insertSize <- read.csv2(file4, comment.char = "#", sep='\t')
+insertSize <- insertSize[1,]
+@
+
+%----------------------------------------------------------------------------------------
+%  Sample Information
+%----------------------------------------------------------------------------------------
+
+<<sampleinfo, echo=FALSE>>=
+library(yaml)
+sample <- yaml.load_file('sample_test.yaml')[['439-1695A_S10']]
+@
+
+%----------------------------------------------------------------------------------------
+%  DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+\PassOptionsToPackage{table}{xcolor}
+\documentclass[12pt, stdletter, dateno]{newlfm}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{wallpaper}
+
+%% styling 
+\newlfmP{noheadline,noHeadline}
+\Cfooter{\thepage} %% page numbering centered on letterhead
+\rfooter{\thepage} %% page numbering right on non-letterhead pages
+
+%% add section support 
+\newcounter{section}
+\newcounter{subsection}[section]
+\newcounter{subsubsection}[section]
+\setcounter{secnumdepth}{4}
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
+                                   {2.3ex \@plus.2ex}%
+                                   {\normalfont\normalsize\bfseries}}
+\newcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\normalfont\normalsize\bfseries}}
+\newcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+                                     {-3ex\@plus -1ex \@minus -.2ex}%
+                                     {0.7ex \@plus .2ex}%
+                                     {\normalfont\normalsize\bfseries}}                                     
+\renewcommand\thesection{\@arabic\c@section}
+\renewcommand\thesubsection{\thesection.\@arabic\c@subsection}
+\renewcommand\thesubsubsection{\thesubsubsection.\@arabic\c@subsubsection}
+\makeatother
+
+%----------------------------------------------------------------------------------------
+%  ADDRESSEE SECTION
+%----------------------------------------------------------------------------------------
+\nameto{\Sexpr{sample$physician_addr$surname} \Sexpr{sample$physician_addr$name}} 
+\addrto{\parbox{3in}{\Sexpr{sample$physician_addr$street} \\ \Sexpr{sample$physician_addr$city}, \Sexpr{sample$physician_addr$state}, \Sexpr{sample$physician_addr$zip}}}
+                   
+%----------------------------------------------------------------------------------------
+%  YOUR NAME & ADDRESS SECTION
+%----------------------------------------------------------------------------------------                     
+%% addres send from
+%\namefrom{Sherlock Holmes} 
+%\addrfrom{\parbox{2in}{221B Baker Street \\ London, UK}}
+
+%\greetto{}
+
+%----------------------------------------------------------------------------------------
+%  Start Document
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\begin{newlfm}
+
+\ThisCenterWallPaper{1}{avera_letter.pdf}
+
+%----------------------------------------------------------------------------------------
+%	Content
+%----------------------------------------------------------------------------------------
+
+\vspace*{1.75cm}
+\textbf{RNA-Seq QC Report for Sample \Sexpr{sanitizeLatexS(sampleID)}}
+
+\vspace*{-0.5cm}
+\line(1,0){475} 
+
+%% SAMPLE INFORMATION
+
+\begin{tabular}{ | l l | } \hline
+Sampling-Date: & \Sexpr{sample$sample_details$sampling_date} \tabularnewline 
+Sample volume: &  \Sexpr{sample$sample_details$sample_volume} \tabularnewline 
+Tumor Purity: &  \Sexpr{sample$sample_details$sample_purity} \tabularnewline
+Amount of RNA used: &  \Sexpr{sample$sample_details$amount_rna_used} \tabularnewline
+Seq-Type(s): & \Sexpr{sample$sample_details$seq_type} \tabularnewline
+Seq-Protocoll(s): & \Sexpr{sample$sample_details$seq_protocoll} \tabularnewline \hline
+\end{tabular}
+
+%% QC TABLE
+\textbf{QC Metrics}
+
+<<qcTable, echo=FALSE, results=tex>>=
+qcTable <- data.frame(#Tool=c('',
+                      #       'FastQC',
+                      #       '',
+                      #       '',
+                      #       'STAR',
+                      #       '',
+                      #       '',
+                      #       '',
+                      #       'Picard',
+                      #       '',
+                      #       '',
+                      #       '',
+                      #       '',
+                      #       ''),
+                      Metric=c('Total Number of reads (mio)',
+                               'per base QC',
+                               'per base GC content',
+                               'per base N content',
+                               'percent uniqule mapped reads',
+                               'percent multi mapped reads',
+                               'percent unmapped reads',
+                              'average read length',
+                               'ribosomal',
+                               'intronic',
+                               'intergenic',
+                               'mRNA',
+                               'mean insert size',
+                               'sd insert size'),
+                      Value=c(round(as.numeric(as.vector(starLog$V2[5]))/1000000,2),
+                              paste(as.vector(fastqc1[2,1]), '(read1)', as.vector(fastqc2[2,1]), '(read2)', sep=' '),
+                              paste(as.vector(fastqc1[6,1]), '(read1)', as.vector(fastqc2[6,1]), '(read2)', sep=' '),
+                              paste(as.vector(fastqc1[7,1]), '(read1)', as.vector(fastqc2[7,1]), '(read2)', sep=' '),
+                              as.vector(gsub('%', '', starLog[9,2])),
+                              as.vector(gsub('%', '', starLog[24,2])),
+                              as.numeric(gsub('%', '', starLog$V2[28])) +
+                                as.numeric(gsub('%', '', starLog$V2[29])) +
+                                as.numeric(gsub('%', '', starLog$V2[30])),
+                              as.vector(gsub('%', '', starLog[10,2])),
+                              round(as.numeric(as.vector(rnaSeqMetrics[,11])),2),
+                              round(as.numeric(as.vector(rnaSeqMetrics[,14])),2),
+                              round(as.numeric(as.vector(rnaSeqMetrics[,15])),2),
+                              round(as.numeric(as.vector(rnaSeqMetrics[,16])),2),
+                              round(as.numeric(as.vector(insertSize[,1])),2),
+                              round(as.numeric(as.vector(insertSize[,6])),2)
+                            ),
+                      Expected=c('>50',
+                                 '',
+                                 '',
+                                 '',
+                                 '>70',
+                                 '',
+                                 '',
+                                 '',
+                                 '',
+                                 '',
+                                 '',
+                                 '',
+                                 '100-200',
+                                 ''),
+                      QCPassed=NA
+                      )
+
+# check if qc passed
+qcTable$QCPassed[1] <- ifelse(as.numeric(as.vector(qcTable$Value[1]))>=50000000, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+
+qcTable$QCPassed[5] <- ifelse(as.numeric(as.vector(qcTable$Value[5]))>=70, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+
+qcTable$QCPassed[13] <- ifelse(as.numeric(as.vector(qcTable$Value[13]))>=100 & as.numeric(as.vector(qcTable$Value[13]))<=200, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+
+qc.Table <- xtable(qcTable)
+print(qc.Table,
+      include.rownames=FALSE,
+      type='latex',
+      sanitize.text.function = function(x) x
+      )
+@
+
+% begin of page 2 ...
+\clearpage
+
+\textbf{Softwareversions and Parameters}
+
+\begin{tabbing}
+Reference Genome - Human (UCSC hg19) \= STAR Version 2.xx \\
+FastQC xyz \> Samtools 1.19.xx \\
+Picard xyz
+\end{tabbing}
+
+\textbf{Session Info}
+
+<<sessioninfo, echo=FALSE>>=
+sessionInfo()
+@
+
+
+%----------------------------------------------------------------------------------------
+
+\end{newlfm}
+
+\end{document}
