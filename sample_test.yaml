@@ -49,18 +49,16 @@
         seq_type       : RNA-Seq
         seq_protocoll  : TrueSeq Stranded mRNA LT Kit
     base_space_qc:
-        total_yield        : 110
-        pf                 : 100
+        total_yield        : 6.8
+        pf                 : 4.4
         percent_pf         : 75
         percent_q_score_30 : 75
-        percent_phix_5_alg : 0.25
-        phix_error_rate    : 2.5
     run_info:
         run_id                     : 07302014
         start                      : 7/30/2014
         completion                 : 8/5/2014
-        total_yield_gb             : 6.8
-        pf_yield                   : 4.4
+        total_yield_gb             : 110
+        pf_yield                   : 100
         percent_pf                 : 0.75
         percent_q_score_30         : 66
         percent_intensity_cycle_20 : 109
