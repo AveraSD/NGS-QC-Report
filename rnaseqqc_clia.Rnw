@@ -63,18 +63,32 @@ sample <- yaml.load_file('sample_test.yaml')[['439-1695A_S10']]
 %  DOCUMENT CONFIGURATIONS
 %----------------------------------------------------------------------------------------
 \PassOptionsToPackage{table}{xcolor}
-\documentclass[12pt, stdletter, dateno]{newlfm}
+\documentclass[11pt, stdletter, dateno]{newlfm}
 \usepackage{xcolor}
 \usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{wallpaper}
+\usepackage{array}
 
-%% styling 
+%% styling
+\newcolumntype{x}[1]{>{\centering\arraybackslash\hspace{0pt}}p{#1}} % centered with column 
 \newlfmP{noheadline,noHeadline}
-\Cfooter{\thepage} %% page numbering centered on letterhead
-\rfooter{\thepage} %% page numbering right on non-letterhead pages
+%\leftmarginsize{0in}
+%\rightmarginsize{0in}
+%\topmarginsize{2mm}
+%\topmarginskip{0in}
+%\headermarginsize{0cm}
+%\headermarginskip{0in}
+
+%% header
+\unprtop{0.65cm}
+\Rheader{\parbox{\textwith}{\small{\begin{tabbing} \textbf{Patient Name} \hspace*{1.25cm} \= \textbf{Report Date} \hspace*{0.75cm} \= \textbf{Tumor Type} \\ \Sexpr{sample$patient$name}, \Sexpr{sample$patient$surname} \> \today \> \Sexpr{sample$patient$tumor_type} \end{tabbing}}}}
+%% footer
+\unprbottom{1.4cm}
+\Lfooter{\scriptsize{Electronically Signed by \Sexpr{sample$medical_director$surname} \Sexpr{sample$medical_director$name} \Sexpr{sample$medical_director$title} | CLIA Number: \Sexpr{sample$lab$clia_number} | \today \\ \Sexpr{sample$lab$name}, \Sexpr{sample$lab$street}, \Sexpr{sample$lab$city}, \Sexpr{sample$lab$state}, \Sexpr{sample$lab$zip}  \hfill page \thepage}} 
+\lfooter{\scriptsize{Electronically Signed by \Sexpr{sample$medical_director$surname} \Sexpr{sample$medical_director$name} \Sexpr{sample$medical_director$title} | CLIA Number: \Sexpr{sample$lab$clia_number} | \today \\ \Sexpr{sample$lab$name}, \Sexpr{sample$lab$street}, \Sexpr{sample$lab$city}, \Sexpr{sample$lab$state}, \Sexpr{sample$lab$zip}  \hfill page \thepage}} 
 
 %% add section support 
 \newcounter{section}
@@ -102,8 +116,8 @@ sample <- yaml.load_file('sample_test.yaml')[['439-1695A_S10']]
 %----------------------------------------------------------------------------------------
 %  ADDRESSEE SECTION
 %----------------------------------------------------------------------------------------
-\nameto{\Sexpr{sample$physician_addr$surname} \Sexpr{sample$physician_addr$name}} 
-\addrto{\parbox{3in}{\Sexpr{sample$physician_addr$street} \\ \Sexpr{sample$physician_addr$city}, \Sexpr{sample$physician_addr$state}, \Sexpr{sample$physician_addr$zip}}}
+%\nameto{\Sexpr{sample$physician_addr$surname} \Sexpr{sample$physician_addr$name}} 
+%\addrto{\parbox{3in}{\Sexpr{sample$physician_addr$street} \\ \Sexpr{sample$physician_addr$city}, \Sexpr{sample$physician_addr$state}, \Sexpr{sample$physician_addr$zip}}}
                    
 %----------------------------------------------------------------------------------------
 %  YOUR NAME & ADDRESS SECTION
@@ -123,13 +137,14 @@ sample <- yaml.load_file('sample_test.yaml')[['439-1695A_S10']]
 
 \begin{newlfm}
 
-\ThisCenterWallPaper{1}{avera_letter.pdf}
+%\ThisCenterWallPaper{1}{avera_letter.pdf}
+\CenterWallPaper{1}{avera_letter.pdf}
 
 %----------------------------------------------------------------------------------------
 %	Content
 %----------------------------------------------------------------------------------------
 
-\vspace*{1.75cm}
+\vspace*{-4.25cm}
 \textbf{RNA-Seq QC Report for Sample \Sexpr{sanitizeLatexS(sampleID)}}
 
 \vspace*{-0.5cm}
@@ -137,100 +152,235 @@ sample <- yaml.load_file('sample_test.yaml')[['439-1695A_S10']]
 
 %% SAMPLE INFORMATION
 
-\begin{tabular}{ | l l | } \hline
-Sampling-Date: & \Sexpr{sample$sample_details$sampling_date} \tabularnewline 
-Sample volume: &  \Sexpr{sample$sample_details$sample_volume} \tabularnewline 
-Tumor Purity: &  \Sexpr{sample$sample_details$sample_purity} \tabularnewline
-Amount of RNA used: &  \Sexpr{sample$sample_details$amount_rna_used} \tabularnewline
-Seq-Type(s): & \Sexpr{sample$sample_details$seq_type} \tabularnewline
-Seq-Protocoll(s): & \Sexpr{sample$sample_details$seq_protocoll} \tabularnewline \hline
-\end{tabular}
+\vspace{-0.3cm}
+\begin{scriptsize}
+\begin{tabbing}
+\textbf{Date of birth:} \= \Sexpr{sample$patient$date_of_birth} \hspace{0.7cm}  \= \textbf{Medical Facility:} \hspace{0.4cm} \= \Sexpr{sample$physician$facility} \hspace{0.4cm} \= \textbf{Specimen Received:} \= \Sexpr{sample$sample_details$received} \\ 
+\textbf{Sex:} \>\Sexpr{sample$patient$sex} \> \textbf{Ordering Physician:} \> \Sexpr{sample$physician$name}, \Sexpr{sample$physician$surname} \> \textbf{Specimen Site:} \> \Sexpr{sample$patient$tumor_site} \\
+\textbf{Specimen ID:} \>\Sexpr{sample$patient$specimen_id} \> \textbf{Medical Facility ID:} \> \Sexpr{sample$physician$facility_id} \> \textbf{Date of Collection:} \> \Sexpr{sample$sample_details$biopsy_date} \\
+\> \> \textbf{Pathologist:} \> \Sexpr{sample$pathologist$name}, \Sexpr{sample$pathologist$surname} \> \textbf{Specimen Type:} \> \Sexpr{sample$patient$specimen_type}
+\end{tabbing}
+\end{scriptsize}
+\vspace{-0.6cm}
+\line(1,0){475}
 
-%% QC TABLE
-\textbf{QC Metrics}
+%% Run Info
 
-<<qcTable, echo=FALSE, results=tex>>=
-qcTable <- data.frame(#Tool=c('',
-                      #       'FastQC',
-                      #       '',
-                      #       '',
-                      #       'STAR',
-                      #       '',
-                      #       '',
-                      #       '',
-                      #       'Picard',
-                      #       '',
-                      #       '',
-                      #       '',
-                      #       '',
-                      #       ''),
-                      Metric=c('Total Number of reads (mio)',
-                               'per base QC',
-                               'per base GC content',
-                               'per base N content',
-                               'percent uniqule mapped reads',
-                               'percent multi mapped reads',
-                               'percent unmapped reads',
-                              'average read length',
-                               'ribosomal',
-                               'intronic',
-                               'intergenic',
-                               'mRNA',
-                               'mean insert size',
-                               'sd insert size'),
-                      Value=c(round(as.numeric(as.vector(starLog$V2[5]))/1000000,2),
-                              paste(as.vector(fastqc1[2,1]), '(read1)', as.vector(fastqc2[2,1]), '(read2)', sep=' '),
-                              paste(as.vector(fastqc1[6,1]), '(read1)', as.vector(fastqc2[6,1]), '(read2)', sep=' '),
-                              paste(as.vector(fastqc1[7,1]), '(read1)', as.vector(fastqc2[7,1]), '(read2)', sep=' '),
-                              as.vector(gsub('%', '', starLog[9,2])),
-                              as.vector(gsub('%', '', starLog[24,2])),
-                              as.numeric(gsub('%', '', starLog$V2[28])) +
+\vspace*{-0.6cm}
+\section*{Run Info}
+\vspace*{-0.5cm}
+\begin{tabularx}{\textwidth}{ p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
+Metric: & Value & Expected & QCPassed \tabularnewline \hline
+Run ID: & \Sexpr{sample$run_info$run_id} & & \tabularnewline 
+Total Yield: &  \Sexpr{sample$run_info$total_yield_gb} (GB) & 90 - 120 (GB) & \tabularnewline 
+Percent Q30: &  \Sexpr{sample$run_info$percent_q_score_30} (\%) & > 75 (\%) & \tabularnewline
+PhiX aligned: &  \Sexpr{sample$run_info$percent_phix_alg} (\%) & > 0.05 (\%) & \tabularnewline
+PhiX error: & \Sexpr{sample$run_info$phix_error_rate} (\%) & < 2.5 (\%) & \tabularnewline
+Seq-Protocoll: & \Sexpr{sample$sample_details$seq_protocoll} & & 
+\end{tabularx}
+
+%% Sample Sequencing Info
+
+\vspace*{-0.4cm}
+\section*{Sample Sequencing Info}
+\vspace*{-0.5cm}
+\begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
+Metric: & Value & Expected & QCPassed \tabularnewline \hline
+Total Yield: &  \Sexpr{} (GB) & 7.5 (GB) & \tabularnewline 
+Number of Reads: &  \Sexpr{} (mio) & > 50 (mio) & \tabularnewline
+Q30: &  \Sexpr{} (\%) & > 75 (\%) &
+\end{tabularx}
+
+%% Sample Mapping Info
+
+\vspace*{-0.4cm}
+\section*{Sample Mapping Info}
+\vspace*{-0.5cm}
+<<samplemapping, echo=FALSE, results=tex>>=
+mappingTable <- data.frame(
+                      Metric=c('Uniquely mapped reads',
+                               'Multi mapped reads',
+                               'Unmapped reads',
+                               'Average read length'
+                      ),
+                      Value=c(paste(as.vector(gsub('%', '', starLog[9,2])), '(\\%)', sep=" "),
+                              paste(as.vector(gsub('%', '', starLog[24,2])), '(\\%)', sep=" "),
+                              paste(as.numeric(gsub('%', '', starLog$V2[28])) +
                                 as.numeric(gsub('%', '', starLog$V2[29])) +
-                                as.numeric(gsub('%', '', starLog$V2[30])),
-                              as.vector(gsub('%', '', starLog[10,2])),
+                                as.numeric(gsub('%', '', starLog$V2[30])), '(\\%)', sep=" "),
+                              paste(as.vector(gsub('%', '', starLog[10,2])), '(bp)', sep=" ")
+                      ),
+                      Expected=c('> 70 (\\%)',
+                                 '< 15 (\\%)',
+                                 '< 20 (\\%)',
+                                 '> 200 (bp)'
+                      ),
+                      QCPassed=NA
+                      )
+
+# check if qc passed
+mappingTable$QCPassed[1] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[9,2])))>=70, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+mappingTable$QCPassed[2] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[24,2])))<15, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+mappingTable$QCPassed[3] <- ifelse(as.numeric(gsub('%', '', starLog$V2[28])) +
+                                as.numeric(gsub('%', '', starLog$V2[29])) +
+                                as.numeric(gsub('%', '', starLog$V2[30]))<20, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+mappingTable$QCPassed[4] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[10,2])))>=200, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+
+mapping.Table <- xtable(mappingTable)
+align(mapping.Table) <- "lp{5.5cm}p{3.5cm}p{3.5cm}x{2cm}"
+print(mapping.Table,
+      #align=c("c","c","c","c","c"),
+      include.rownames=FALSE,
+      type='latex',
+      sanitize.text.function = function(x) x,
+      latex.environments = "left",
+      tabular.environment="tabularx",
+      width="\\textwidth",
+      hline.after = c(-1,0)
+      )
+@
+
+%% Transcript Level Info
+
+\vspace*{-0.35cm}
+\section*{Transcript Estimation Info}
+\vspace*{-0.5cm}
+<<transcript, echo=FALSE, results=tex>>=
+transcriptTable <- data.frame(
+                      Metric=c('Transcript-annotated reads',
+                               '  ribosomal',
+                               '  intronic',
+                               '  intergenic',
+                               '  mRNA',
+                               'Expressed transcripts'
+                      ),
+                      Value=c(NA,
                               round(as.numeric(as.vector(rnaSeqMetrics[,11])),2),
                               round(as.numeric(as.vector(rnaSeqMetrics[,14])),2),
                               round(as.numeric(as.vector(rnaSeqMetrics[,15])),2),
                               round(as.numeric(as.vector(rnaSeqMetrics[,16])),2),
-                              round(as.numeric(as.vector(insertSize[,1])),2),
-                              round(as.numeric(as.vector(insertSize[,6])),2)
+                              NA
                             ),
-                      Expected=c('>50',
+                      Expected=c('',
                                  '',
                                  '',
                                  '',
-                                 '>70',
-                                 '',
-                                 '',
-                                 '',
-                                 '',
-                                 '',
-                                 '',
-                                 '',
-                                 '100-200',
+                                 '',   
                                  ''),
                       QCPassed=NA
                       )
 
 # check if qc passed
-qcTable$QCPassed[1] <- ifelse(as.numeric(as.vector(qcTable$Value[1]))>=50000000, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
 
-qcTable$QCPassed[5] <- ifelse(as.numeric(as.vector(qcTable$Value[5]))>=70, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-
-qcTable$QCPassed[13] <- ifelse(as.numeric(as.vector(qcTable$Value[13]))>=100 & as.numeric(as.vector(qcTable$Value[13]))<=200, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-
-qc.Table <- xtable(qcTable)
-print(qc.Table,
+transcript.Table <- xtable(transcriptTable)
+align(transcript.Table) <- "lp{5.5cm}p{3.5cm}p{3.5cm}x{2cm}"
+print(transcript.Table,
       include.rownames=FALSE,
       type='latex',
-      sanitize.text.function = function(x) x
+      sanitize.text.function = function(x) x,
+      latex.environments = "left",
+      tabular.environment="tabularx",
+      width="\\textwidth",
+      hline.after = c(-1,0)
       )
 @
+
+% Variant Calling Info
+
+\vspace*{-0.35cm}
+\section*{Sample Variant Calling Info}
+\vspace*{-0.5cm}
+\begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} p{1cm} } \hline
+Metric: & Value & Expeced & QCPassed \tabularnewline \hline
+SNP Panel Callable &  \Sexpr{} & & 
+\end{tabularx}
+
+
+% %% QC TABLE
+% \section*{QC Metrics}
+% 
+% <<qcTable, echo=FALSE, results=tex>>=
+% qcTable <- data.frame(#Tool=c('',
+%                       #       'FastQC',
+%                       #       '',
+%                       #       '',
+%                       #       'STAR',
+%                       #       '',
+%                       #       '',
+%                       #       '',
+%                       #       'Picard',
+%                       #       '',
+%                       #       '',
+%                       #       '',
+%                       #       '',
+%                       #       ''),
+%                       Metric=c('Total Number of reads (mio)',
+%                                'per base QC',
+%                                #'per base GC content',
+%                                #'per base N content',
+%                                'percent uniqule mapped reads',
+%                                'percent multi mapped reads',
+%                                'percent unmapped reads',
+%                               'average read length',
+%                                'ribosomal',
+%                                'intronic',
+%                                'intergenic',
+%                                'mRNA',
+%                                'mean insert size',
+%                                'sd insert size'),
+%                       Value=c(round(as.numeric(as.vector(starLog$V2[5]))/1000000,2),
+%                               paste(as.vector(fastqc1[2,1]), '(read1)', as.vector(fastqc2[2,1]), '(read2)', sep=' '),
+%                               #paste(as.vector(fastqc1[6,1]), '(read1)', as.vector(fastqc2[6,1]), '(read2)', sep=' '),
+%                               #paste(as.vector(fastqc1[7,1]), '(read1)', as.vector(fastqc2[7,1]), '(read2)', sep=' '),
+%                               as.vector(gsub('%', '', starLog[9,2])),
+%                               as.vector(gsub('%', '', starLog[24,2])),
+%                               as.numeric(gsub('%', '', starLog$V2[28])) +
+%                                 as.numeric(gsub('%', '', starLog$V2[29])) +
+%                                 as.numeric(gsub('%', '', starLog$V2[30])),
+%                               as.vector(gsub('%', '', starLog[10,2])),
+%                               round(as.numeric(as.vector(rnaSeqMetrics[,11])),2),
+%                               round(as.numeric(as.vector(rnaSeqMetrics[,14])),2),
+%                               round(as.numeric(as.vector(rnaSeqMetrics[,15])),2),
+%                               round(as.numeric(as.vector(rnaSeqMetrics[,16])),2),
+%                               round(as.numeric(as.vector(insertSize[,1])),2),
+%                               round(as.numeric(as.vector(insertSize[,6])),2)
+%                             ),
+%                       Expected=c('>50',
+%                                  '',
+%                                  #'',
+%                                  #'',
+%                                  '>70',
+%                                  '',
+%                                  '',
+%                                  '',
+%                                  '',
+%                                  '',
+%                                  '',
+%                                  '',
+%                                  '100-200',
+%                                  ''),
+%                       QCPassed=NA
+%                       )
+% 
+% # check if qc passed
+% qcTable$QCPassed[1] <- ifelse(as.numeric(as.vector(qcTable$Value[1]))>=50000000, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+% 
+% qcTable$QCPassed[3] <- ifelse(as.numeric(as.vector(qcTable$Value[3]))>=70, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+% 
+% qcTable$QCPassed[11] <- ifelse(as.numeric(as.vector(qcTable$Value[11]))>=100 & as.numeric(as.vector(qcTable$Value[11]))<=200, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+% 
+% qc.Table <- xtable(qcTable)
+% print(qc.Table,
+%       include.rownames=FALSE,
+%       type='latex',
+%       sanitize.text.function = function(x) x
+%       )
+% @
 
 % begin of page 2 ...
 \clearpage
 
-\textbf{Softwareversions and Parameters}
+\section*{Softwareversions and Parameters}
 
 \begin{tabbing}
 Reference Genome - Human (UCSC hg19) \= STAR Version 2.xx \\
@@ -238,12 +388,11 @@ FastQC xyz \> Samtools 1.19.xx \\
 Picard xyz
 \end{tabbing}
 
-\textbf{Session Info}
-
-<<sessioninfo, echo=FALSE>>=
-sessionInfo()
-@
-
+%\section*{Session Info}
+%
+%<<sessioninfo, echo=FALSE>>=
+%sessionInfo()
+%@
 
 %----------------------------------------------------------------------------------------
 

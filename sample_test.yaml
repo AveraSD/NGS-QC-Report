@@ -1,39 +1,60 @@
 439-1695A_S10:
-    patient_details:
-        date_of_birth     : 
-        clinical_diagnosis: 
-        cancer_stage      : 
-        date_of_diagnosis : 
-        receptor_type     : 
-        molecular_type    : 
-    patient_addr:
-        name    : 
-        surname : 
-        street  : 
-        state   : 
-        city    : 
-        zip     : 
-    physician_addr:
-        name    : House
-        surname : G
-        street  : 12345 Hospital Ave
-        state   : CA
-        city    : San Diego
-        zip     : 12345
+    patient:
+        name              : Peppermint
+        surname           : Patty
+        street            : 123 Cray Court
+        state             : CA
+        city              : San Diego
+        zip               : 92122
+        date_of_birth     : 01/01/1899
+        clinical_diagnosis: Breast Cancer
+        tumor_type        : Breast Cancer
+        tumor_site        : left breast
+        specimen_type     : fresh frozen
+        cancer_stage      : III
+        date_of_diagnosis : 01/01/1990
+        receptor_type     : HER2+ ER- PR-
+        molecular_type    : HER2
+        specimen_id       : 14MS-10038 1A
+        sex               : female
+    physician:
+        name       : House
+        surname    : Gregory
+        street     : 1 Princeton-Plainsboro Teaching Hospital
+        state      : NJ
+        city       : Princeton
+        zip        : 12345
+        facility   : Princeton-Plainsboro
+        facility_id: 12345
+    pathologist:
+        name       : Murphy
+        surname    : Katie
+    medical_director:
+        name       : House
+        surname    : Gregory
+        title      : M.D., Medical Director
+    lab:
+        name       : Avera Cancer Institute
+        street     : 11099 N Torrey Pines Rd, Suite 160
+        state      : CA
+        city       : La Jolla
+        zip        : 92037
+        clia_number: 12345
+        phone      : 858 450 2805
     sample_details:
-        sampling_date  :
-        sample_volume  :
-        sample_purity  :
+        received       : 09/17/1014
+        biopsy_date    : 09/15/1014
+        sample_purity  : 85
         amount_rna_used: 100ng
         seq_type       : RNA-Seq
-        seq_protocoll  : Nano
+        seq_protocoll  : TrueSeq Stranded mRNA LT Kit
     base_space_qc:
-        total_yield_fb     : 110
+        total_yield        : 110
         pf                 : 100
-        percent_percent_pf : 75
+        percent_pf         : 75
         percent_q_score_30 : 75
         percent_phix_5_alg : 0.25
-        percent_error_rate : 2.5
+        phix_error_rate    : 2.5
     run_info:
         run_id                     : 07302014
         start                      : 7/30/2014
@@ -47,7 +68,7 @@
         prep_kit                   : Nano
         percent_demultiplexing_info: 39
         percent_phix_alg           : 0.11
-        percent_error_rate         : 2.46
+        phix_error_rate            : 2.46
         
 
 
