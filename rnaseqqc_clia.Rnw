@@ -21,11 +21,11 @@ sanitizeLatexS <- function(str) {
     gsub('([#$%&~_\\^\\\\{}])', '\\\\\\\\\\1', str, perl = TRUE);
 }
  
-sampleID <- '439-1695A_S10'
+#sampleID <- '439-1695A_S10'
 @
 
 <<dataIn, echo=FALSE>>=
-rootDir <- '~/AWS/storage/Geparquinto/'
+#rootDir <- '~/AWS/storage/Geparquinto/'
 
 ## FASTQC
 file1 <- paste(rootDir,'QC/',sampleID,'_1/',sampleID,'_1_fastqc.zip',sep='')
@@ -64,7 +64,7 @@ eGenes <- length(which(sCounts$V2>0))
 
 <<sampleinfo, echo=FALSE>>=
 library(yaml)
-sample <- yaml.load_file('sample_test.yaml')[['439-1695A_S10']]
+sample <- yaml.load_file(sampleMeta)[[sampleID]]
 @
 
 %----------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ print(mapping.Table,
 %% Gene Level Info
 
 \vspace*{-0.35cm}
-\section*{Trascription Info}
+\section*{Transcription Info}
 \vspace*{-0.5cm}
 <<transcript, echo=FALSE, results=tex>>=
 transcriptTable <- data.frame(
@@ -325,7 +325,7 @@ snpinfoPanel <- "$\\\\square$" #ifelse(   >=90, "$\\\\text{\\\\color{red}{\\\\rl
 \section*{Sample Variant Calling Info}
 \vspace*{-0.5cm}
 \begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
-Metric: & Value & Expeced & QCPassed \tabularnewline \hline
+Metric: & Value & Expected & QCPassed \tabularnewline \hline
 SNP Panel Callable & \Sexpr{} & > 90 (\%) & \Sexpr{print(snpinfoPanel)}
 \end{tabularx}
 
