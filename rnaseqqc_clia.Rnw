@@ -28,29 +28,29 @@ sanitizeLatexS <- function(str) {
 #rootDir <- '~/AWS/storage/Geparquinto/'
 
 ## FASTQC
-file1 <- paste(rootDir,'QC/',sampleID,'_1/',sampleID,'_1_fastqc.zip',sep='')
-file2 <- paste(rootDir,'QC/',sampleID,'_2/',sampleID,'_2_fastqc.zip',sep='')
+#file1 <- paste(rootDir,'QC/',sampleID,'_1/',sampleID,'_1_fastqc.zip',sep='')
+#file2 <- paste(rootDir,'QC/',sampleID,'_2/',sampleID,'_2_fastqc.zip',sep='')
 fastqc1 <- read.csv2(unz(file1, paste(sampleID,'_1_fastqc/summary.txt',sep='')), sep='\t', header=F)
 fastqc2 <- read.csv2(unz(file2, paste(sampleID,'_2_fastqc/summary.txt',sep='')), sep='\t', header=F)
 colnames(fastqc1) <- c('Result', 'Analysis', 'File')
 colnames(fastqc2) <- c('Result', 'Analysis', 'File')
 
 ## STAR
-fileStar <- paste(rootDir,'star/',sampleID,'/Log.final.out',sep='')
+#fileStar <- paste(rootDir,'star/',sampleID,'/Log.final.out',sep='')
 starLog <- read.csv2(fileStar, sep='\t', header=F)
 starLog$V1 <- sapply(starLog$V1, function(x) gsub('\\|', '', x))
 
 ## picard rnaseqmetrics $ insert size
-file3 <- paste(rootDir,'QC/',sampleID,'/rnaseqmetrics',sep='')
+#file3 <- paste(rootDir,'QC/',sampleID,'/rnaseqmetrics',sep='')
 rnaSeqMetrics <- read.csv2(file3, comment.char = "#", sep='\t')
 rnaSeqMetrics <- rnaSeqMetrics[1,]
 
-file4 <- paste(rootDir,'QC/',sampleID,'/insertSize.txt',sep='')
+#file4 <- paste(rootDir,'QC/',sampleID,'/insertSize.txt',sep='')
 insertSize <- read.csv2(file4, comment.char = "#", sep='\t')
 insertSize <- insertSize[1,]
 
 ## htseq-count
-fileHT <- paste(rootDir,'counts/',sampleID,'_counts.txt',sep='')
+#fileHT <- paste(rootDir,'counts/',sampleID,'_counts.txt',sep='')
 sCounts <- read.csv2(fileHT, sep='\t', header=F)
 sCounts <- sCounts[1:(dim(sCounts)[1]-5),] # remove last 5 lines, hold no genes
 nGenes <- dim(sCounts)[1]
