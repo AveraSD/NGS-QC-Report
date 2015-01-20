@@ -56,6 +56,11 @@ sCounts <- sCounts[1:(dim(sCounts)[1]-5),] # remove last 5 lines, hold no genes
 nGenes <- dim(sCounts)[1]
 nCounts <- sum(sCounts$V2)
 eGenes <- length(which(sCounts$V2>0))
+
+## CallableLoci
+callableLoci <- read.csv2(fileCLoci, sep='')
+callableTotal <- sum(callableLoci$nBases)
+callableN <- callableLoci$nBases[2]
 @
 
 %----------------------------------------------------------------------------------------
@@ -326,7 +331,7 @@ snpinfoPanel <- "$\\\\square$" #ifelse(   >=90, "$\\\\text{\\\\color{red}{\\\\rl
 \vspace*{-0.5cm}
 \begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
 Metric: & Value & Expected & QCPassed \tabularnewline \hline
-SNP Panel Callable & \Sexpr{} & > 90 (\%) & \Sexpr{print(snpinfoPanel)}
+SNP Panel Callable & \Sexpr{round((callableN/callableTotal)*100,1)} (\%) & > 90 (\%) & \Sexpr{print(snpinfoPanel)}
 \end{tabularx}
 
 % begin of page 2 ...
