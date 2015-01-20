@@ -1,8 +1,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Next Generation Sequencing QC Report
 %
-% Original author:
+% Original authors:
 % Tobias Meissner
+% Tristan Carland
 %
 % License:
 % MIT
