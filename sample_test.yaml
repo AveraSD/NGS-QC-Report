@@ -1,4 +1,4 @@
-439-1695A_S10:
+CCD054-T1-RNA:
     patient:
         name              : Peppermint
         surname           : Patty
@@ -47,26 +47,10 @@
         sample_purity  : 85
         amount_rna_used: 100ng
         seq_type       : RNA-Seq
-        seq_protocoll  : TrueSeq Stranded mRNA LT Kit
-    base_space_qc:
-        total_yield        : 6.8
-        pf                 : 4.4
-        percent_pf         : 75
-        percent_q_score_30 : 75
+        seq_protocoll  : Roche EzCap MedExome
     run_info:
-        run_id                     : 07302014
-        start                      : 7/30/2014
-        completion                 : 8/5/2014
-        total_yield_gb             : 110
-        pf_yield                   : 100
-        percent_pf                 : 0.75
-        percent_q_score_30         : 66
-        percent_intensity_cycle_20 : 109
-        data_output_gb             : 19.35
-        prep_kit                   : Nano
-        percent_demultiplexing_info: 39
-        percent_phix_alg           : 0.11
-        phix_error_rate            : 2.46
+        run_id                     : 16271300
+
         
 
 

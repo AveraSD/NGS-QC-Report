@@ -11,18 +11,30 @@
 ########################################
 args <- commandArgs(trailingOnly=TRUE)
 
-rootDir <- args[1]
-sampleID <- args[2]
-sampleMeta <- args[3]
+# input arguments:
+# 1: sampleID
+# 2: DNA / RNA
+# 3: rootDir
+# 4: metainfo
+# 5: base space access token
+
+sampleID <- args[1]
+type <- args[2]
+rootDir <- args[3]
+sampleMeta <- args[4]
+accessToken <- args[5]
 
 # Input files >> can be made commandline arguments if needed..
-file1 <- paste(rootDir,'QC/',sampleID,'_1/',sampleID,'_1_fastqc.zip',sep='')
-file2 <- paste(rootDir,'QC/',sampleID,'_2/',sampleID,'_2_fastqc.zip',sep='')
-fileStar <- paste(rootDir,'star/',sampleID,'/Log.final.out',sep='')
-file3 <- paste(rootDir,'QC/',sampleID,'/rnaseqmetrics',sep='')
-file4 <- paste(rootDir,'QC/',sampleID,'/insertSize.txt',sep='')
-fileHT <- paste(rootDir,'counts/',sampleID,'_counts.txt',sep='')
-fileCLoci <- paste(rootDir, 'variants/', sampleID, '/callable_loci.txt', sep='')
+if(type=='DNA') {
+  
+}
+if(type=='RNA') {
+  fastqc1File <- paste(rootDir,'/fastqc/',sampleID, '/', sampleID,'_1_fastqc.zip',sep='')
+  fastqc2File <- paste(rootDir,'/fastqc/',sampleID, '/', sampleID,'_2_fastqc.zip',sep='')
+  starFile <- paste(rootDir,'/alignments/',sampleID,'/', sampleID, '_Log.final.out' ,sep='')
+  qualimapFile <- paste(rootDir,'/qualimap/',sampleID,'/genome_results.txt',sep='')
+  countsFile <- paste(rootDir,'/alignments/',sampleID,'/', sampleID, '_ReadsPerGene.out.tab' ,sep='')
+}
 
 # create tex file
 Sweave('rnaseqqc_clia.Rnw')
