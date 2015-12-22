@@ -26,12 +26,28 @@ sanitizeLatexS <- function(str) {
 @
 
 <<dataIn, echo=FALSE>>=
+## FASTQC
+fastqc1 <- read.csv2(unz(fastqc1File, paste(sampleID,'_1_fastqc/summary.txt',sep='')), sep='\t', header=F)
+fastqc2 <- read.csv2(unz(fastqc2File, paste(sampleID,'_2_fastqc/summary.txt',sep='')), sep='\t', header=F)
+colnames(fastqc1) <- c('Result', 'Analysis', 'File')
+colnames(fastqc2) <- c('Result', 'Analysis', 'File')
 
+parseCoverage <- function(coverage) {
+  paste0(gsub("%", "", strsplit(as.character(coverage), " ")[[1]][9]), "%")
+}
 
-## CallableLoci
-callableLoci <- read.csv2(fileCLoci, sep='')
-callableTotal <- sum(callableLoci$nBases)
-callableN <- callableLoci$nBases[2]
+q <- read.csv(qualimapFile, sep="\t")
+qualimapStats <- list(
+    `Total Reads` = as.numeric(gsub(",", "", strsplit(as.character(q[10,]), " = ")[[1]][2])),
+    `Duplication Rate` = paste0(as.character(round(100*(as.numeric(gsub(",", "", strsplit(as.character(q[15,]), " = ")[[1]][2]))/as.numeric(gsub(",", "", strsplit(as.character(q[10,]), " = ")[[1]][2])))), 2), "%"),
+    `GC Content` = strsplit(as.character(q[28,]), " = ")[[1]][2],
+    `Median Insert Size` = strsplit(as.character(q[19,]), " = ")[[1]][2],
+    `Mean Coverage` = paste0(gsub("X", "", strsplit(as.character(q[38,]), " = ")[[1]][2]), "X"),
+    `StdDev Coverage` = paste0(gsub("X", "", strsplit(as.character(q[39,]), " = ")[[1]][2]), "X"),
+    `1X` = parseCoverage(q[40,]),
+    `10X` = parseCoverage(q[49,]),
+    `20X` = parseCoverage(q[59,]),
+    `50X` = parseCoverage(q[89,]))
 @
 
 %----------------------------------------------------------------------------------------
@@ -39,8 +55,7 @@ callableN <- callableLoci$nBases[2]
 %----------------------------------------------------------------------------------------
 
 <<sampleinfo, echo=FALSE>>=
-library(yaml)
-sample <- yaml.load_file(sampleMeta)[[sampleID]]
+
 @
 
 %----------------------------------------------------------------------------------------
@@ -129,7 +144,7 @@ sample <- yaml.load_file(sampleMeta)[[sampleID]]
 %----------------------------------------------------------------------------------------
 
 \vspace*{-4.25cm}
-\textbf{RNA-Seq QC Report for Sample \Sexpr{sanitizeLatexS(sampleID)}}
+\textbf{DNA-Seq QC Report for Sample \Sexpr{sanitizeLatexS(patID)}}
 
 \vspace*{-0.5cm}
 \line(1,0){475} 
@@ -151,32 +166,69 @@ sample <- yaml.load_file(sampleMeta)[[sampleID]]
 %% Run Info
 
 <<runinfo,results=hide,echo=FALSE>>=
-runinfoGB <- ifelse(sample$run_info$total_yield_gb>=90, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
-runinfoQ30 <- ifelse(sample$run_info$percent_q_score_30>=75, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
-runinfoPhiX <- ifelse(sample$run_info$percent_phix_alg>=0.05, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
-runinfoPhiXErr <- ifelse(sample$run_info$phix_error_rate<2.5, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+runSummary <- lapply(sample$run_info$run_id, getRunSummary, accessToken)
+runSummarySample <- sapply(runSummary, function(x) {
+  #ind <- grep(sampleID, x$Sample)
+  ind <- grep('054-T1-DNA', x$Sample)
+  x[ind, ]
+})
+
+# how many runs for this sample
+nSample <- apply(runSummarySample, 2, function(x) {
+  ifelse(length(x$Sample)==1, TRUE, FALSE)
+})
+runSummarySample <- runSummarySample[,nSample]
+
+total_yield_gb <- sapply(runSummary[nSample], function(x) {
+  round((sum(x$`Total Reads`)-x$`Total Reads`[grep('Undetermined', x$Sample)])*300/1000000000,2)
+})
+percent_q_score_30 <- apply(runSummarySample, 2, function(x) {
+  round(x$`Percent Q30`,2)
+})
+percent_phix_alg <- apply(runSummarySample, 2, function(x) {
+  round(x$`Percent Aligned`,2)
+})
+phix_error_rate <- apply(runSummarySample, 2, function(x) {
+  round(x$`Error Rate`,2)
+})
+
+runinfoGB <- ifelse(total_yield_gb>=90, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+runinfoQ30 <- ifelse(percent_q_score_30>=75, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+runinfoPhiX <- ifelse(percent_phix_alg>=0.05, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+runinfoPhiXErr <- ifelse(phix_error_rate<2.5, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
 @
 
-\vspace*{-0.6cm}
-\section*{Run Info}
-\vspace*{-0.5cm}
-\begin{tabularx}{\textwidth}{ p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
-Metric: & Value & Expected & QCPassed \tabularnewline \hline
-Run ID: & \Sexpr{sample$run_info$run_id} & & \tabularnewline 
-Total Yield: &  \Sexpr{sample$run_info$total_yield_gb} (GB) & 90 - 120 (GB) & \Sexpr{print(runinfoGB)} \tabularnewline 
-Q30: &  \Sexpr{sample$run_info$percent_q_score_30} (\%) & > 75 (\%) & \Sexpr{print(runinfoQ30)} \tabularnewline
-PhiX aligned: &  \Sexpr{sample$run_info$percent_phix_alg} (\%) & > 0.05 (\%) & \Sexpr{print(runinfoPhiX)} \tabularnewline
-PhiX error: & \Sexpr{sample$run_info$phix_error_rate} (\%) & < 2.5 (\%) & \Sexpr{print(runinfoPhiXErr)} \tabularnewline
-Seq-Protocoll: & \Sexpr{sample$sample_details$seq_protocoll} & &
-\end{tabularx}
+<<runinfo_table,results=tex,echo=FALSE>>=
+for (i in 1:length(which(nSample))) {
+  cat("\\vspace*{-0.6cm}\n")
+  cat(paste0("\\section*{Run Info ",i,"}\n"))
+  cat("\\vspace*{-0.5cm}\n")
+  cat("\\begin{tabularx}{\\textwidth}{ p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \\hline\n")
+  cat("Metric: & Value & Expected & QCPassed \\tabularnewline \\hline\n")
+  cat("\\end{tabularx}\n")
+}
+@
+
+%\vspace*{-0.6cm}
+%\section*{Run Info}
+%\vspace*{-0.5cm}
+%\begin{tabularx}{\textwidth}{ p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
+%Metric: & Value & Expected & QCPassed \tabularnewline \hline
+%Run ID: & \Sexpr{sample$run_info$run_id} & & \tabularnewline 
+%Total Yield: &  \Sexpr{sample$run_info$total_yield_gb} (GB) & 90 - 120 (GB) & \Sexpr{print(runinfoGB)} \tabularnewline 
+%Q30: &  \Sexpr{sample$run_info$percent_q_score_30} (\%) & > 75 (\%) & \Sexpr{print(runinfoQ30)} \tabularnewline
+%PhiX aligned: &  \Sexpr{sample$run_info$percent_phix_alg} (\%) & > 0.05 (\%) & \Sexpr{print(runinfoPhiX)} \tabularnewline
+%PhiX error: & \Sexpr{sample$run_info$phix_error_rate} (\%) & < 2.5 (\%) & \Sexpr{print(runinfoPhiXErr)} \tabularnewline
+%Seq-Protocoll: & \Sexpr{sample$sample_details$seq_protocoll} & &
+%\end{tabularx}
 
 
 %% Sample Sequencing Info
 
 <<seqinfo, results=hide, echo=FALSE>>=
-seqinfoGB <- ifelse(sample$base_space_qc$total_yield>=7.5, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
-seqinfoR <- ifelse(round(as.numeric(as.vector(starLog$V2[5]))/1000000,2)>=50, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
-seqinfoQ30 <- ifelse(sample$base_space_qc$percent_q_score_30>=75, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+#seqinfoGB <- ifelse(sample$base_space_qc$total_yield>=7.5, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+#seqinfoR <- ifelse(round(as.numeric(as.vector(starLog$V2[5]))/1000000,2)>=50, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+#seqinfoQ30 <- ifelse(sample$base_space_qc$percent_q_score_30>=75, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
 @
 
 
@@ -185,9 +237,9 @@ seqinfoQ30 <- ifelse(sample$base_space_qc$percent_q_score_30>=75, "$\\\\text{\\\
 \vspace*{-0.5cm}
 \begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
 Metric: & Value & Expected & QCPassed \tabularnewline \hline
-Total Yield: &  \Sexpr{sample$base_space_qc$total_yield} (GB) & 15.1 (GB) &\Sexpr{print(seqinfoGB)} \tabularnewline 
-Number of Reads: &  \Sexpr{round(as.numeric(as.vector(starLog$V2[5]))/1000000,2)} (mio) & > 50 (mio) & \Sexpr{print(seqinfoR)} \tabularnewline
-Q30: &  \Sexpr{sample$base_space_qc$percent_q_score_30} (\%) & > 75 (\%) & \Sexpr{print(seqinfoQ30)}
+%Total Yield: &  \Sexpr{sample$base_space_qc$total_yield} (GB) & 15.1 (GB) &\Sexpr{print(seqinfoGB)} \tabularnewline 
+%Number of Reads: &  \Sexpr{round(as.numeric(as.vector(starLog$V2[5]))/1000000,2)} (mio) & > 50 (mio) & \Sexpr{print(seqinfoR)} \tabularnewline
+%Q30: &  \Sexpr{sample$base_space_qc$percent_q_score_30} (\%) & > 75 (\%) & \Sexpr{print(seqinfoQ30)}
 \end{tabularx}
 
 %% Sample Mapping Info
@@ -196,51 +248,51 @@ Q30: &  \Sexpr{sample$base_space_qc$percent_q_score_30} (\%) & > 75 (\%) & \Sexp
 \section*{Sample Mapping Info}
 \vspace*{-0.5cm}
 <<samplemapping, echo=FALSE, results=tex>>=
-mappingTable <- data.frame(
-                      Metric=c('Uniquely mapped reads',
-                               'Multi mapped reads',
-                               'Unmapped reads',
-                               'Average read length',
-                               'Insert size'
-                      ),
-                      Value=c(paste(as.vector(gsub('%', '', starLog[9,2])), '(\\%)', sep=" "),
-                              paste(as.vector(gsub('%', '', starLog[24,2])), '(\\%)', sep=" "),
-                              paste(as.numeric(gsub('%', '', starLog$V2[28])) +
-                                as.numeric(gsub('%', '', starLog$V2[29])) +
-                                as.numeric(gsub('%', '', starLog$V2[30])), '(\\%)', sep=" "),
-                              paste(as.vector(gsub('%', '', starLog[10,2])), '(bp)', sep=" "),
-                              paste(round(as.numeric(as.vector(insertSize[,1])),2), '(bp)', sep=" ")
-                      ),
-                      Expected=c('> 70 (\\%)',
-                                 '< 15 (\\%)',
-                                 '< 20 (\\%)',
-                                 '> 200 (bp)',
-                                 '110-160 (bp)'
-                      ),
-                      QCPassed=NA
-                      )
-
-# check if qc passed
-mappingTable$QCPassed[1] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[9,2])))>=70, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-mappingTable$QCPassed[2] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[24,2])))<15, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-mappingTable$QCPassed[3] <- ifelse(as.numeric(gsub('%', '', starLog$V2[28])) +
-                                as.numeric(gsub('%', '', starLog$V2[29])) +
-                                as.numeric(gsub('%', '', starLog$V2[30]))<20, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-mappingTable$QCPassed[4] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[10,2])))>=200, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-mappingTable$QCPassed[5] <- ifelse(as.numeric(as.vector(insertSize[,1]))>=110 & as.numeric(as.vector(insertSize[,1]))<=160, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-
-mapping.Table <- xtable(mappingTable)
-align(mapping.Table) <- "lp{5.5cm}p{3.5cm}p{3.5cm}x{2cm}"
-print(mapping.Table,
-      #align=c("c","c","c","c","c"),
-      include.rownames=FALSE,
-      type='latex',
-      sanitize.text.function = function(x) x,
-      latex.environments = "left",
-      tabular.environment="tabularx",
-      width="\\textwidth",
-      hline.after = c(-1,0)
-      )
+# mappingTable <- data.frame(
+#                       Metric=c('Uniquely mapped reads',
+#                                'Multi mapped reads',
+#                                'Unmapped reads',
+#                                'Average read length',
+#                                'Insert size'
+#                       ),
+#                       Value=c(paste(as.vector(gsub('%', '', starLog[9,2])), '(\\%)', sep=" "),
+#                               paste(as.vector(gsub('%', '', starLog[24,2])), '(\\%)', sep=" "),
+#                               paste(as.numeric(gsub('%', '', starLog$V2[28])) +
+#                                 as.numeric(gsub('%', '', starLog$V2[29])) +
+#                                 as.numeric(gsub('%', '', starLog$V2[30])), '(\\%)', sep=" "),
+#                               paste(as.vector(gsub('%', '', starLog[10,2])), '(bp)', sep=" "),
+#                               paste(round(as.numeric(as.vector(insertSize[,1])),2), '(bp)', sep=" ")
+#                       ),
+#                       Expected=c('> 70 (\\%)',
+#                                  '< 15 (\\%)',
+#                                  '< 20 (\\%)',
+#                                  '> 200 (bp)',
+#                                  '110-160 (bp)'
+#                       ),
+#                       QCPassed=NA
+#                       )
+# 
+# # check if qc passed
+# mappingTable$QCPassed[1] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[9,2])))>=70, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+# mappingTable$QCPassed[2] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[24,2])))<15, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+# mappingTable$QCPassed[3] <- ifelse(as.numeric(gsub('%', '', starLog$V2[28])) +
+#                                 as.numeric(gsub('%', '', starLog$V2[29])) +
+#                                 as.numeric(gsub('%', '', starLog$V2[30]))<20, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+# mappingTable$QCPassed[4] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[10,2])))>=200, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+# mappingTable$QCPassed[5] <- ifelse(as.numeric(as.vector(insertSize[,1]))>=110 & as.numeric(as.vector(insertSize[,1]))<=160, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+# 
+# mapping.Table <- xtable(mappingTable)
+# align(mapping.Table) <- "lp{5.5cm}p{3.5cm}p{3.5cm}x{2cm}"
+# print(mapping.Table,
+#       #align=c("c","c","c","c","c"),
+#       include.rownames=FALSE,
+#       type='latex',
+#       sanitize.text.function = function(x) x,
+#       latex.environments = "left",
+#       tabular.environment="tabularx",
+#       width="\\textwidth",
+#       hline.after = c(-1,0)
+#       )
 @
 
 %% Gene Level Info
@@ -249,60 +301,60 @@ print(mapping.Table,
 \section*{Transcription Info}
 \vspace*{-0.5cm}
 <<transcript, echo=FALSE, results=tex>>=
-transcriptTable <- data.frame(
-                      Metric=c('Gene-annotated reads',
-                               #'  ribosomal',
-                               #'  intronic',
-                               #'  intergenic',
-                               #'  mRNA',
-                               paste('Expressed genes (', nGenes, ' total)', sep='')
-                      ),
-                      Value=c(paste(round(nCounts/1000000,2), '(mio)', sep=' '),
-                              #round(as.numeric(as.vector(rnaSeqMetrics[,11])),2),
-                              #round(as.numeric(as.vector(rnaSeqMetrics[,14])),2),
-                              #round(as.numeric(as.vector(rnaSeqMetrics[,15])),2),
-                              #round(as.numeric(as.vector(rnaSeqMetrics[,16])),2),
-                              eGenes#paste(eGenes, '/', nGenes, sep=' ')
-                            ),
-                      Expected=c('25 (mio)',
-                                 #'',
-                                 #'',
-                                 #'',
-                                 #'',   
-                                 '> 10000'),
-                      QCPassed=NA
-                      )
-
-# check if qc passed
-transcriptTable$QCPassed[1] <- ifelse(round(nCounts/1000000,2)>=25, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-transcriptTable$QCPassed[2] <- ifelse(eGenes>10000, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-
-transcript.Table <- xtable(transcriptTable)
-align(transcript.Table) <- "lp{5.5cm}p{3.5cm}p{3.5cm}x{2cm}"
-print(transcript.Table,
-      include.rownames=FALSE,
-      type='latex',
-      sanitize.text.function = function(x) x,
-      latex.environments = "left",
-      tabular.environment="tabularx",
-      width="\\textwidth",
-      hline.after = c(-1,0)
-      )
+# transcriptTable <- data.frame(
+#                       Metric=c('Gene-annotated reads',
+#                                #'  ribosomal',
+#                                #'  intronic',
+#                                #'  intergenic',
+#                                #'  mRNA',
+#                                paste('Expressed genes (', nGenes, ' total)', sep='')
+#                       ),
+#                       Value=c(paste(round(nCounts/1000000,2), '(mio)', sep=' '),
+#                               #round(as.numeric(as.vector(rnaSeqMetrics[,11])),2),
+#                               #round(as.numeric(as.vector(rnaSeqMetrics[,14])),2),
+#                               #round(as.numeric(as.vector(rnaSeqMetrics[,15])),2),
+#                               #round(as.numeric(as.vector(rnaSeqMetrics[,16])),2),
+#                               eGenes#paste(eGenes, '/', nGenes, sep=' ')
+#                             ),
+#                       Expected=c('25 (mio)',
+#                                  #'',
+#                                  #'',
+#                                  #'',
+#                                  #'',   
+#                                  '> 10000'),
+#                       QCPassed=NA
+#                       )
+# 
+# # check if qc passed
+# transcriptTable$QCPassed[1] <- ifelse(round(nCounts/1000000,2)>=25, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+# transcriptTable$QCPassed[2] <- ifelse(eGenes>10000, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+# 
+# transcript.Table <- xtable(transcriptTable)
+# align(transcript.Table) <- "lp{5.5cm}p{3.5cm}p{3.5cm}x{2cm}"
+# print(transcript.Table,
+#       include.rownames=FALSE,
+#       type='latex',
+#       sanitize.text.function = function(x) x,
+#       latex.environments = "left",
+#       tabular.environment="tabularx",
+#       width="\\textwidth",
+#       hline.after = c(-1,0)
+#       )
 @
 
 % Variant Calling Info
 
 <<snpinfo, results=hide, echo=FALSE>>=
-snpinfoPanel <- "$\\\\square$" #ifelse(   >=90, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+#snpinfoPanel <- "$\\\\square$" #ifelse(   >=90, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
 @
 
 
-\vspace*{-0.35cm}
-\section*{Sample Variant Calling Info}
-\vspace*{-0.5cm}
-\begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
-Metric: & Value & Expected & QCPassed \tabularnewline \hline
-SNP Panel Callable & \Sexpr{round((callableN/callableTotal)*100,1)} (\%) & > 90 (\%) & \Sexpr{print(snpinfoPanel)}
+%\vspace*{-0.35cm}
+%\section*{Sample Variant Calling Info}
+%\vspace*{-0.5cm}
+%\begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
+%Metric: & Value & Expected & QCPassed \tabularnewline \hline
+%SNP Panel Callable & \Sexpr{round((callableN/callableTotal)*100,1)} (\%) & > 90 (\%) & \Sexpr{print(snpinfoPanel)}
 \end{tabularx}
 
 % begin of page 2 ...

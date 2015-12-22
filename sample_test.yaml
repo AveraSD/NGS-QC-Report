@@ -1,4 +1,4 @@
-CCD054-T1-RNA:
+CCD054:
     patient:
         name              : Peppermint
         surname           : Patty
@@ -49,8 +49,8 @@ CCD054-T1-RNA:
         seq_type       : RNA-Seq
         seq_protocoll  : Roche EzCap MedExome
     run_info:
-        run_id                     : 16271300
-
+        run_id                     : [16271300,16140189,16173163,16265284]
+        kit_len                    : 300
         
 
 

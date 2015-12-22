@@ -18,7 +18,7 @@ library(knitr)
 library(xtable)
 source('BaseSpaceRunInfo.R')
 
-sanitizeLatexS <- function(str) {
+ sanitizeLatexS <- function(str) {
     gsub('([#$%&~_\\^\\\\{}])', '\\\\\\\\\\1', str, perl = TRUE);
 }
 @
@@ -31,7 +31,7 @@ colnames(fastqc1) <- c('Result', 'Analysis', 'File')
 colnames(fastqc2) <- c('Result', 'Analysis', 'File')
 
 ## STAR
-starLog <- read.csv2(fileStar, sep='\t', header=F)
+starLog <- read.csv2(starFile, sep='\t', header=F)
 starLog$V1 <- sapply(starLog$V1, function(x) gsub('\\|', '', x))
 
 ## Qualimap
@@ -51,13 +51,7 @@ eGenes <- length(which(sCounts>0))
 % ---------------------------------------------------------------------------------------
 
 <<sampleinfo, echo=FALSE>>=
-library(yaml)
-sample <- yaml.load_file(sampleMeta)[[sampleID]]
-runSummary <- lapply(sample$run_info$run_id, getRunSummary, accessToken)
-runSummarySample <- sapply(runSummary, function(x) {
-  ind <- grep(sampleID, x$Sample)
-  x[ind, ]
-})
+
 @
 
 %----------------------------------------------------------------------------------------
@@ -146,7 +140,7 @@ runSummarySample <- sapply(runSummary, function(x) {
 %----------------------------------------------------------------------------------------
 
 \vspace*{-4.25cm}
-\textbf{RNA-Seq QC Report for Sample \Sexpr{sanitizeLatexS(sampleID)}}
+\textbf{RNA-Seq QC Report for Sample \Sexpr{sanitizeLatexS(patID)}}
 
 \vspace*{-0.5cm}
 \line(1,0){475} 
@@ -168,6 +162,12 @@ runSummarySample <- sapply(runSummary, function(x) {
 %% Run Info
 
 <<runinfo,results=hide,echo=FALSE>>=
+runSummary <- lapply(sample$run_info$run_id, getRunSummary, accessToken)
+runSummarySample <- sapply(runSummary, function(x) {
+  ind <- grep(sampleID, x$Sample)
+  x[ind, ]
+})
+
 total_yield_gb <- round((sum(runSummary[[1]]$`Total Reads`)-123068848)*150/1000000000,2)
 percent_q_score_30 <- round(runSummarySample[,1]$`Percent Q30`,2)
 percent_phix_alg <- round(runSummarySample[,1]$`Percent Aligned`,2)
