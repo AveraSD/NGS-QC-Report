@@ -43,7 +43,8 @@ if(dir.exists(paste0(rootDir,'alignments/',sets[1]))) {
   sampleID <- sets[1]
   fastqc1File <- paste(rootDir,'/fastqc/',sampleID, '/', sampleID,'_1_fastqc.zip',sep='')
   fastqc2File <- paste(rootDir,'/fastqc/',sampleID, '/', sampleID,'_2_fastqc.zip',sep='')
-  qualimapFile <- paste(rootDir,'/qualimap/',sampleID,'/genome_results.txt',sep='')
+  qualimapText <- paste(rootDir,'/qualimap/',sampleID,'/genome_results.txt',sep='')
+  qualimapHTML <- paste(rootDir,'/qualimap/',sampleID,'/qualimapReport.html',sep='')
   
   # create tex file
   Sweave('dnaseqqc_clia.Rnw')
@@ -52,7 +53,8 @@ if(dir.exists(paste0(rootDir,'alignments/',sets[1]))) {
   sampleID <- sets[2]
   fastqc1File <- paste(rootDir,'/fastqc/',sampleID, '/', sampleID,'_1_fastqc.zip',sep='')
   fastqc2File <- paste(rootDir,'/fastqc/',sampleID, '/', sampleID,'_2_fastqc.zip',sep='')
-  qualimapFile <- paste(rootDir,'/qualimap/',sampleID,'/genome_results.txt',sep='')
+  qualimapText <- paste(rootDir,'/qualimap/',sampleID,'/genome_results.txt',sep='')
+  qualimapHTML <- paste(rootDir,'/qualimap/',sampleID,'/qualimapReport.html',sep='')
   
   # create tex file
   Sweave('dnaseqqc_clia.Rnw') 
@@ -62,7 +64,8 @@ if(dir.exists(paste0(rootDir,'alignments/',sets[1]))) {
   fastqc1File <- paste(rootDir,'/fastqc/',sampleID, '/', sampleID,'_1_fastqc.zip',sep='')
   fastqc2File <- paste(rootDir,'/fastqc/',sampleID, '/', sampleID,'_2_fastqc.zip',sep='')
   starFile <- paste(rootDir,'/alignments/',sampleID,'/', sampleID, '_Log.final.out' ,sep='')
-  qualimapFile <- paste(rootDir,'/qualimap/',sampleID,'/genome_results.txt',sep='')
+  qualimapText <- paste(rootDir,'/qualimap/',sampleID,'/genome_results.txt',sep='')
+  qualimapHTML <- paste(rootDir,'/qualimap/',sampleID,'/qualimapReport.html',sep='')
   countsFile <- paste(rootDir,'/alignments/',sampleID,'/', sampleID, '_ReadsPerGene.out.tab' ,sep='')  
   
   # create tex file

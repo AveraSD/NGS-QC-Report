@@ -46,11 +46,11 @@ CCD054:
         biopsy_date    : 09/15/1014
         sample_purity  : 85
         amount_rna_used: 100ng
-        seq_type       : RNA-Seq
-        seq_protocoll  : Roche EzCap MedExome
+        seq_type       : [RNA-Seq,DNA-Seq,DNA-Seq,DNA-Seq]
+        seq_protocoll  : [KAPPA RNA-Seq,Roche EzCap MedExome,Roche EzCap MedExome,Roche EzCap MedExome]
     run_info:
         run_id                     : [16271300,16140189,16173163,16265284]
-        kit_len                    : 300
+        kit_len                    : [150,300,300,300]
         
 
 
