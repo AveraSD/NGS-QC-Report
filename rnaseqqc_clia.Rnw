@@ -16,60 +16,42 @@
 <<r init, echo=FALSE>>=
 library(knitr)
 library(xtable)
+source('BaseSpaceRunInfo.R')
 
-sanitizeLatexS <- function(str) {
+ sanitizeLatexS <- function(str) {
     gsub('([#$%&~_\\^\\\\{}])', '\\\\\\\\\\1', str, perl = TRUE);
 }
- 
-#sampleID <- '439-1695A_S10'
 @
 
 <<dataIn, echo=FALSE>>=
-#rootDir <- '~/AWS/storage/Geparquinto/'
-
 ## FASTQC
-#file1 <- paste(rootDir,'QC/',sampleID,'_1/',sampleID,'_1_fastqc.zip',sep='')
-#file2 <- paste(rootDir,'QC/',sampleID,'_2/',sampleID,'_2_fastqc.zip',sep='')
-fastqc1 <- read.csv2(unz(file1, paste(sampleID,'_1_fastqc/summary.txt',sep='')), sep='\t', header=F)
-fastqc2 <- read.csv2(unz(file2, paste(sampleID,'_2_fastqc/summary.txt',sep='')), sep='\t', header=F)
+fastqc1 <- read.csv2(unz(fastqc1File, paste(sampleID,'_1_fastqc/summary.txt',sep='')), sep='\t', header=F)
+fastqc2 <- read.csv2(unz(fastqc2File, paste(sampleID,'_2_fastqc/summary.txt',sep='')), sep='\t', header=F)
 colnames(fastqc1) <- c('Result', 'Analysis', 'File')
 colnames(fastqc2) <- c('Result', 'Analysis', 'File')
 
 ## STAR
-#fileStar <- paste(rootDir,'star/',sampleID,'/Log.final.out',sep='')
-starLog <- read.csv2(fileStar, sep='\t', header=F)
+starLog <- read.csv2(starFile, sep='\t', header=F)
 starLog$V1 <- sapply(starLog$V1, function(x) gsub('\\|', '', x))
 
-## picard rnaseqmetrics $ insert size
-#file3 <- paste(rootDir,'QC/',sampleID,'/rnaseqmetrics',sep='')
-rnaSeqMetrics <- read.csv2(file3, comment.char = "#", sep='\t')
-rnaSeqMetrics <- rnaSeqMetrics[1,]
+## Qualimap
+#qualimap <- read.csv(qualimapFile, sep="\t")
+insertSize <- 190 #insertSize[1,]
 
-#file4 <- paste(rootDir,'QC/',sampleID,'/insertSize.txt',sep='')
-insertSize <- read.csv2(file4, comment.char = "#", sep='\t')
-insertSize <- insertSize[1,]
-
-## htseq-count
-#fileHT <- paste(rootDir,'counts/',sampleID,'_counts.txt',sep='')
-sCounts <- read.csv2(fileHT, sep='\t', header=F)
-sCounts <- sCounts[1:(dim(sCounts)[1]-5),] # remove last 5 lines, hold no genes
-nGenes <- dim(sCounts)[1]
-nCounts <- sum(sCounts$V2)
-eGenes <- length(which(sCounts$V2>0))
-
-## CallableLoci
-callableLoci <- read.csv2(fileCLoci, sep='')
-callableTotal <- sum(callableLoci$nBases)
-callableN <- callableLoci$nBases[2]
+## counts
+sCounts <- read.csv2(countsFile, sep='\t', header=F)$V4
+sCounts <- sCounts[5:length(sCounts)] # remove first 4 lines, no count info
+nGenes <- length(sCounts)
+nCounts <- sum(sCounts)
+eGenes <- length(which(sCounts>0))
 @
 
-%----------------------------------------------------------------------------------------
-%  Sample Information
-%----------------------------------------------------------------------------------------
+% ---------------------------------------------------------------------------------------
+% Sample Information
+% ---------------------------------------------------------------------------------------
 
 <<sampleinfo, echo=FALSE>>=
-library(yaml)
-sample <- yaml.load_file(sampleMeta)[[sampleID]]
+
 @
 
 %----------------------------------------------------------------------------------------
@@ -158,7 +140,7 @@ sample <- yaml.load_file(sampleMeta)[[sampleID]]
 %----------------------------------------------------------------------------------------
 
 \vspace*{-4.25cm}
-\textbf{RNA-Seq QC Report for Sample \Sexpr{sanitizeLatexS(sampleID)}}
+\textbf{RNA-Seq QC Report for Sample \Sexpr{sanitizeLatexS(patID)}}
 
 \vspace*{-0.5cm}
 \line(1,0){475} 
@@ -180,10 +162,21 @@ sample <- yaml.load_file(sampleMeta)[[sampleID]]
 %% Run Info
 
 <<runinfo,results=hide,echo=FALSE>>=
-runinfoGB <- ifelse(sample$run_info$total_yield_gb>=90, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
-runinfoQ30 <- ifelse(sample$run_info$percent_q_score_30>=75, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
-runinfoPhiX <- ifelse(sample$run_info$percent_phix_alg>=0.05, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
-runinfoPhiXErr <- ifelse(sample$run_info$phix_error_rate<2.5, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+runSummary <- lapply(sample$run_info$run_id, getRunSummary, accessToken)
+runSummarySample <- sapply(runSummary, function(x) {
+  ind <- grep(sampleID, x$Sample)
+  x[ind, ]
+})
+
+total_yield_gb <- round((sum(runSummary[[1]]$`Total Reads`)-123068848)*150/1000000000,2)
+percent_q_score_30 <- round(runSummarySample[,1]$`Percent Q30`,2)
+percent_phix_alg <- round(runSummarySample[,1]$`Percent Aligned`,2)
+phix_error_rate <- round(runSummarySample[,1]$`Error Rate`,2)
+
+runinfoGB <- ifelse(total_yield_gb>=90, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+runinfoQ30 <- ifelse(percent_q_score_30>=75, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+runinfoPhiX <- ifelse(percent_phix_alg>=0.05, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
+runinfoPhiXErr <- ifelse(phix_error_rate<2.5, "$\\\\text{\\\\color{red}{\\\\rlap{$\\\\checkmark$}}}\\\\square$", "$\\\\square$")
 @
 
 \vspace*{-0.6cm}
@@ -191,11 +184,12 @@ runinfoPhiXErr <- ifelse(sample$run_info$phix_error_rate<2.5, "$\\\\text{\\\\col
 \vspace*{-0.5cm}
 \begin{tabularx}{\textwidth}{ p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
 Metric: & Value & Expected & QCPassed \tabularnewline \hline
-Run ID: & \Sexpr{sample$run_info$run_id} & & \tabularnewline 
-Total Yield: &  \Sexpr{sample$run_info$total_yield_gb} (GB) & 90 - 120 (GB) & \Sexpr{print(runinfoGB)} \tabularnewline 
-Q30: &  \Sexpr{sample$run_info$percent_q_score_30} (\%) & > 75 (\%) & \Sexpr{print(runinfoQ30)} \tabularnewline
-PhiX aligned: &  \Sexpr{sample$run_info$percent_phix_alg} (\%) & > 0.05 (\%) & \Sexpr{print(runinfoPhiX)} \tabularnewline
-PhiX error: & \Sexpr{sample$run_info$phix_error_rate} (\%) & < 2.5 (\%) & \Sexpr{print(runinfoPhiXErr)} \tabularnewline
+Run ID: & \Sexpr{runSummarySample[,1]$`Run Id`} & & \tabularnewline
+Sample: & \Sexpr{runSummarySample[,1]$Sample} & & \tabularnewline 
+Total Yield: &  \Sexpr{total_yield_gb} (GB) & > 90 (GB) & \Sexpr{print(runinfoGB)} \tabularnewline 
+Q30: &  \Sexpr{percent_q_score_30} (\%) & > 75 (\%) & \Sexpr{print(runinfoQ30)} \tabularnewline
+PhiX aligned: &  \Sexpr{percent_phix_alg} (\%) & > 0.05 (\%) & \Sexpr{print(runinfoPhiX)} \tabularnewline
+PhiX error: & \Sexpr{phix_error_rate} (\%) & < 2.5 (\%) & \Sexpr{print(runinfoPhiXErr)} \tabularnewline
 Seq-Protocoll: & \Sexpr{sample$sample_details$seq_protocoll} & &
 \end{tabularx}
 
@@ -214,9 +208,7 @@ seqinfoQ30 <- ifelse(sample$base_space_qc$percent_q_score_30>=75, "$\\\\text{\\\
 \vspace*{-0.5cm}
 \begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
 Metric: & Value & Expected & QCPassed \tabularnewline \hline
-Total Yield: &  \Sexpr{sample$base_space_qc$total_yield} (GB) & 15.1 (GB) &\Sexpr{print(seqinfoGB)} \tabularnewline 
 Number of Reads: &  \Sexpr{round(as.numeric(as.vector(starLog$V2[5]))/1000000,2)} (mio) & > 50 (mio) & \Sexpr{print(seqinfoR)} \tabularnewline
-Q30: &  \Sexpr{sample$base_space_qc$percent_q_score_30} (\%) & > 75 (\%) & \Sexpr{print(seqinfoQ30)}
 \end{tabularx}
 
 %% Sample Mapping Info
@@ -238,13 +230,13 @@ mappingTable <- data.frame(
                                 as.numeric(gsub('%', '', starLog$V2[29])) +
                                 as.numeric(gsub('%', '', starLog$V2[30])), '(\\%)', sep=" "),
                               paste(as.vector(gsub('%', '', starLog[10,2])), '(bp)', sep=" "),
-                              paste(round(as.numeric(as.vector(insertSize[,1])),2), '(bp)', sep=" ")
+                              paste(insertSize, '(bp)', sep=" ")
                       ),
                       Expected=c('> 70 (\\%)',
                                  '< 15 (\\%)',
                                  '< 20 (\\%)',
-                                 '> 200 (bp)',
-                                 '110-160 (bp)'
+                                 '> 100 (bp)',
+                                 '150-250 (bp)'
                       ),
                       QCPassed=NA
                       )
@@ -255,8 +247,8 @@ mappingTable$QCPassed[2] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[24
 mappingTable$QCPassed[3] <- ifelse(as.numeric(gsub('%', '', starLog$V2[28])) +
                                 as.numeric(gsub('%', '', starLog$V2[29])) +
                                 as.numeric(gsub('%', '', starLog$V2[30]))<20, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-mappingTable$QCPassed[4] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[10,2])))>=200, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
-mappingTable$QCPassed[5] <- ifelse(as.numeric(as.vector(insertSize[,1]))>=110 & as.numeric(as.vector(insertSize[,1]))<=160, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+mappingTable$QCPassed[4] <- ifelse(as.numeric(as.vector(gsub('%', '', starLog[10,2])))>=100, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
+mappingTable$QCPassed[5] <- ifelse(insertSize>=150 & insertSize<=250, "$\\text{\\color{red}{\\rlap{$\\checkmark$}}}\\square$", "$\\square$")
 
 mapping.Table <- xtable(mappingTable)
 align(mapping.Table) <- "lp{5.5cm}p{3.5cm}p{3.5cm}x{2cm}"
@@ -331,7 +323,7 @@ snpinfoPanel <- "$\\\\square$" #ifelse(   >=90, "$\\\\text{\\\\color{red}{\\\\rl
 \vspace*{-0.5cm}
 \begin{tabularx}{\textwidth}{  p{5.5cm} p{3.5cm} p{3.5cm} x{2cm} } \hline
 Metric: & Value & Expected & QCPassed \tabularnewline \hline
-SNP Panel Callable & \Sexpr{round((callableN/callableTotal)*100,1)} (\%) & > 90 (\%) & \Sexpr{print(snpinfoPanel)}
+SNP Panel Callable & (\%) & > 90 (\%) & \Sexpr{print(snpinfoPanel)}
 \end{tabularx}
 
 % begin of page 2 ...
